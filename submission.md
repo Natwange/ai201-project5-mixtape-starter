@@ -230,3 +230,12 @@ All three are **logic errors hidden behind correct-looking structure**, not cras
 off-by-one slice, a stray day-of-week condition, and a side effect placed outside its guard.
 Each one contradicts its own docstring, which is what made them findable by reading the code and
 then reproducing against the seed data.
+
+---
+
+## Commit history
+
+Each bug fix is an isolated commit on the `bugfix/mixtape` branch, with a meaningful `Fix Issue #N:`
+message — no fixes bundled together:
+
+![git log --oneline on the bugfix/mixtape branch showing one commit per bug fix](![git-log.png](image.png))
