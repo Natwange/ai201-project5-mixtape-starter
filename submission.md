@@ -133,6 +133,11 @@ database** inside an app context, comparing observed behavior to the docstring's
 - **How I reproduced it:** Called `get_playlist_songs()` for the seeded playlist **"Late Night Vibes"**, which has **7** rows in `playlist_entries`.
   - **Expected:** `7` songs. **Actual:** `6` songs (the last one by `position` is missing).
   - Reachable over HTTP via `GET /playlists/<id>/songs`.
+- **Fix:** removed the slice — `return [song.to_dict() for song in songs[:-1]]` → `return [song.to_dict() for song in songs]`. Single-line change at the root cause; the ordering query above it was already correct and left untouched.
+- **Verification (both sides of the boundary):**
+  - All three seeded playlists now return the full `7` songs, in `position` order, with the last-by-position song included ✓.
+  - Empty playlist → `0` songs ✓ (no crash). Single-song playlist → `1` song ✓ — previously this returned an empty list, the worst case of the off-by-one.
+  - Existing playlist test suite (`pytest -k playlist`): **3 passed**.
 
 ### Issue #3 — Re-adding a song creates duplicate notifications (inconsistent)
 
