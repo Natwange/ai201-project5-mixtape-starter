@@ -154,6 +154,11 @@ database** inside an app context, comparing observed behavior to the docstring's
   | after add #3 | ×1 | 5 |
 
   - **Expected:** re-adding an already-present song is a no-op → no new notification. **Actual:** the song stays deduped at ×1, but a new notification is created on every call.
+- **Fix:** moved the `create_notification(...)` block **inside** the `if song not in playlist.songs:` guard (a re-indent, no logic rewrite), so the notification is a side effect of an *actual* addition rather than of every call. Now the notification and the playlist membership are consistent — both happen only when the song is newly added.
+- **Verification:**
+  - Re-adding an already-present song three times: song stays ×1 and notifications stay **flat** ✓ (previously climbed by one each call).
+  - Full test suite (`pytest`): **13 passed** — no related functionality broken.
+  - **Boundary I could not exercise end-to-end:** the "genuinely new song → exactly one notification" path is blocked by the *separate, pre-existing* `IntegrityError` documented below (append via the relationship never sets `playlist_entries.position`). My change only re-indents the notification and does not touch that code path, so it neither fixes nor worsens it. That defect is out of scope for these three issues and would need its own fix.
 
 > **Additional observation (found while reproducing #3):** adding a song that is *not yet* in a
 > playlist raises `IntegrityError: NOT NULL constraint failed: playlist_entries.position`,

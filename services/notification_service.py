@@ -56,18 +56,18 @@ def add_to_playlist(playlist_id: str, song_id: str, added_by_user_id: str) -> No
     if not playlist:
         raise ValueError(f"Playlist {playlist_id} not found")
 
-    # Add the song to the playlist
+    # Add the song to the playlist (only notify when it is actually newly added)
     if song not in playlist.songs:
         playlist.songs.append(song)
         db.session.commit()
 
-    # Notify the person who originally shared the song (if it wasn't them who added it)
-    if song.shared_by != added_by_user_id:
-        create_notification(
-            user_id=song.shared_by,
-            notification_type="song_added_to_playlist",
-            body=f"{adder.username} added your song '{song.title}' to the playlist '{playlist.name}'.",
-        )
+        # Notify the person who originally shared the song (if it wasn't them who added it)
+        if song.shared_by != added_by_user_id:
+            create_notification(
+                user_id=song.shared_by,
+                notification_type="song_added_to_playlist",
+                body=f"{adder.username} added your song '{song.title}' to the playlist '{playlist.name}'.",
+            )
 
 
 def rate_song(user_id: str, song_id: str, score: int) -> Rating:
