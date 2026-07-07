@@ -238,4 +238,4 @@ then reproducing against the seed data.
 Each bug fix is an isolated commit on the `bugfix/mixtape` branch, with a meaningful `Fix Issue #N:`
 message — no fixes bundled together:
 
-![git log --oneline on the bugfix/mixtape branch showing one commit per bug fix](![git-log.png](image.png))
+![git log --oneline on the bugfix/mixtape branch showing one commit per bug fix](image-1.png)
