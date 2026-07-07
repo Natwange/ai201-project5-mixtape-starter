@@ -1,4 +1,62 @@
-# Mixtape — Codebase Map
+# Mixtape — Submission
+
+## AI usage
+
+I used an AI coding assistant (Claude, via Claude Code) throughout this project. Here is
+specifically how I used it, what it helped me understand, and — importantly — where it was
+wrong or incomplete and I had to verify things myself.
+
+**Environment & running the app.** I got stuck at the start: my `python -m venv` had been
+interrupted and left a half-built venv with a locked `python.exe`, and I kept trying to activate
+it with bash-style commands (`source`, `activate.bat`) that don't work in PowerShell. The AI
+diagnosed that a leftover Python process was still holding the file, walked me through stopping
+that process and recreating the venv, and gave me the correct PowerShell syntax
+(`.venv\Scripts\Activate.ps1`, and `$env:FLASK_APP = "app:create_app"` instead of the
+`FLASK_APP=... flask run` form). When my browser showed a 404 and then a 405, it explained these
+weren't my mistakes — the app has no `/` route, and `/playlists/` is POST-only — and that the
+project is a JSON API, not a website. It gave me working GET URLs built from real seeded IDs so I
+could actually see responses.
+
+**Understanding the code.** I asked it to explain things I was unsure about: what `uuid` is and
+why the models use it for IDs, the difference between a data model and a database table, whether
+the models are "OOP with attributes and methods" (they are), and the execution order of a request
+(browser → route → service → model → back). I checked each explanation against the actual code and
+they held up.
+
+**Codebase map.** I had it read through all the files and draft the codebase map — file
+responsibilities, the "add song to playlist → notify sharer" data flow, and the architectural
+patterns. I reviewed the claims against the files rather than taking them on faith.
+
+**Bug hunting — where the AI was wrong and I had to verify.** This was where AI help was most
+useful *and* most fallible:
+
+- Its first list of bugs included "`rate_song` never sends a notification." After the assignment's
+  hint about "inconsistent duplicates," this turned out **not** to be the intended bug — it's a
+  missing feature, not a triggerable defect — so we replaced it.
+- Its first guess for the duplicates bug was **flat-out wrong**: it predicted `search_songs` would
+  return duplicate rows because of an `outerjoin` on the tags table. When we actually ran it,
+  SQLAlchemy's ORM had already de-duplicated the entities, so **no** duplicates appeared. That
+  failed prediction is what pushed us to keep looking, and the real "inconsistent duplicates" bug
+  turned out to be in `add_to_playlist` (a notification created *outside* the dedupe guard).
+- Lesson I took from this: the AI's reasoning about database/ORM behavior was plausible but not
+  reliable until executed. **Every bug and every fix in this submission was reproduced by actually
+  running code against the seeded database**, not accepted on the AI's word.
+
+**Things I double-checked myself.** When I asked whether the playlist slice should be `[:-2]`, the
+AI correctly explained it should be *no* slice at all, and I confirmed that with a small list
+example. I verified each fix with the test suite (`pytest`) and with boundary cases on both sides
+of the bug. I also noticed — with the AI flagging it — that the reproduction runs left extra
+notification rows in the dev database, because `create_notification` commits internally, so that
+data can be reset with `python seed_data.py`.
+
+**A bug the AI found that's out of scope.** While reproducing Issue #3, it surfaced a fourth
+defect: adding a brand-new song raises `IntegrityError` because the relationship append never sets
+`playlist_entries.position`. I documented it as an observation but left it unfixed, since it's
+outside the three assigned issues.
+
+---
+
+# Codebase Map
 
 Mixtape is a Flask + SQLAlchemy JSON API for sharing songs with friends. Users share
 songs, add them to collaborative playlists, rate them, log listens (which build a daily
